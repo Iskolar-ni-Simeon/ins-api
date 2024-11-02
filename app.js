@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const cors = require('cors')
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
@@ -12,6 +13,11 @@ const app = express();
 const PORT = 5000;
 
 app.use(express.json());
+app.use(cors({
+    origin: 'http://localhost:8080',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 console.log("Initializing S3...");
 const s3 = new S3();
@@ -55,11 +61,13 @@ initializeKeys();
  */
 
 app.post("/login", async (req, res) => {
+    console.log(req.body)
     try {
         const response = await fetch('https://www.googleapis.com/oauth2/v3/certs');
         const keys = await response.json();
         
         const decodedToken = jwt.decode(req.body.credential, { complete: true });
+        console.log(decodedToken)
         if (decodedToken.payload.aud !== process.env.GOOGLE_OAUTH_CLIENT_ID) {
             return res.status(401).json({ error: 'Invalid audience' });
         }
