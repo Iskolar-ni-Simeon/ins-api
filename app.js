@@ -66,12 +66,11 @@ const rds = new RDS();
  * 
  * THESIS-RELATED ROUTES:
  * /search - GET
- * /thesis - POST (for adding, again) & GET (for getting info, again, no shit)
+ * /thesis - POST (for adding, again) & GET (for getting info, again, no shit) /upload - POST
  * /delete - POST (isama na dito yung pagdelete ng file sa S3. )
  * 
  * FILE-RELATED ROUTES:
- * /upload - POST
- * /accessthesisfile - GET (gumawa na lang ng button na "Access this file" para hindi constantly kumukuha ng link sa S3.)
+ * /accessthesis - GET (gumawa na lang ng button na "Access this file" para hindi constantly kumukuha ng link sa S3.)
  * 
  * DON'T FORGET: ILAGAY YUNG decodeJWT MIDDLEWARE PLSPLSPLSPLSPLSPLS
  * MAG-GENERATE NG BAGONG BEARER TOKEN SA 'Iskolar ni Simeon'.
