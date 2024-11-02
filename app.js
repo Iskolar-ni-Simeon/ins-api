@@ -16,13 +16,14 @@ const allowedOrigins = ['http://localhost:8080', 'https://iskolar-ni-simeon.verc
 app.use(express.json());
 app.use(cors({
     origin: function (origin, callback) {
+        console.log('Incoming origin:', origin); 
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, origin); // Allow the request
+            callback(null, origin); 
         } else {
-            callback(new Error('Not allowed by CORS')); // Reject the request
+            callback(new Error('Not allowed by CORS')); 
         }
     },
-    credentials: true // If you need to include cookies
+    credentials: true
 }));
 
 console.log("Initializing S3...");
