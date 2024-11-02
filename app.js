@@ -11,12 +11,18 @@ const { JWTMiddleware, generateKey } = require('./public/scripts/auth.js');
 
 const app = express();
 const PORT = 5000;
+const allowedOrigins = ['http://localhost:8080', 'https://iskolar-ni-simeon.vercel.app/'];
 
 app.use(express.json());
 app.use(cors({
-    origin: 'http://localhost:8080',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, origin); // Allow the request
+        } else {
+            callback(new Error('Not allowed by CORS')); // Reject the request
+        }
+    },
+    credentials: true // If you need to include cookies
 }));
 
 console.log("Initializing S3...");
