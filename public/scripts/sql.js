@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
-class RDS {
+class SQL {
     constructor() {
         this.pool = new Pool({
             user: process.env.DATABASE_USERNAME,
@@ -10,9 +10,9 @@ class RDS {
             database: process.env.DATABASE_NAME,
             password: process.env.DATABASE_PASSWORD,
             port: process.env.DATABASE_PORT,
-            connectionTimeoutMillis: 20000
+            ssl: true
         });
-        console.log("RDS initialized.");
+        console.log("SQL initialized.");
         
     }
     /**
@@ -36,7 +36,6 @@ class RDS {
                 id VARCHAR PRIMARY KEY,
                 title VARCHAR UNIQUE,
                 year VARCHAR,
-                pages VARCHAR,
                 abstract TEXT
             );`;
         
@@ -60,6 +59,7 @@ class RDS {
                 keyword_id VARCHAR REFERENCES keywords(id),
                 PRIMARY KEY (thesis_id, keyword_id)
             );`;
+        
         
         const createSavedThesesTable = `
             CREATE TABLE IF NOT EXISTS user_saved_theses (
@@ -97,13 +97,16 @@ class RDS {
         ON CONFLICT (id) DO NOTHING;
         `
         const result = await this.pool.query(addUserQuery, [id, name, email])
-        return result.rowCount > 0
+        if (result.rowCount > 0) {
+            return {ok: true, message: "Added user successfully."}
+        } else {
+            return {ok: false, message: 'Unable to add user.'}
+        }
     }
     
-    async getUserSavedTheses(params) {
-        const {userId} = params
+    async getUserSavedTheses(userId) {
         const query = `
-            SELECT t.id, t.title, t.year, t.pages
+            SELECT t.id, t.title, t.year
             FROM user_saved_theses ust
             JOIN theses t ON ust.thesis_id = t.id
             WHERE ust.user_id = $1;
@@ -113,13 +116,12 @@ class RDS {
             const result = await this.pool.query(query, [userId]);
     
             if (result.rowCount > 0) {
-                return result.rows;
+                return {ok: true, data: result.rows}
             } else {
-                return []; 
+                return {ok: true, data: []}; 
             }
-        } catch (error) {
-            console.error('Error retrieving saved theses:', error);
-            throw new Error('Could not retrieve saved theses');
+        } catch (err) {
+            return {ok: false, message: `Unable to fetch saved thesis: ${err}`}
         }
     }
     
@@ -127,12 +129,12 @@ class RDS {
      * Adds theses to user's "library."
      * @param {Object} params - parameters for the function.
      * @param {string} params.userId - user's ID given by Google OAuth.
-     * @param {string} params.thesesId - thesis' unique version 4 UUID. 
+     * @param {string} params.thesisId - thesis' unique version 4 UUID. 
      */
     async addThesisToSaved(params) {
-        const {userId, thesisId} = params
+        const { userId, thesisId } = params;
         const thesisExistsQuery = `
-            SELECT 1 FROM theses WHERE id = $1;
+            SELECT * FROM theses WHERE id = $1;
         `;
         
         try {
@@ -141,7 +143,7 @@ class RDS {
             if (thesisResult.rowCount === 0) {
                 return { success: false, message: 'Thesis does not exist.' };
             }
-    
+            
             const insertQuery = `
                 INSERT INTO user_saved_theses (user_id, thesis_id)
                 VALUES ($1, $2)
@@ -149,17 +151,40 @@ class RDS {
             `;
     
             const insertResult = await this.pool.query(insertQuery, [userId, thesisId]);
-
+    
             if (insertResult.rowCount > 0) {
-                console.log(`Thesis with ID ${thesisId} saved for user ${userId}.`);
-                return { success: true, message: 'Thesis saved successfully.' };
+                return { ok: true, message: 'Thesis saved successfully.' };
             } else {
-                console.log(`Thesis with ID ${thesisId} was already saved by user ${userId}.`);
-                return { success: false, message: 'Thesis already saved.' };
+                return { ok: true, message: 'Thesis already saved.' };
             }
-        } catch (error) {
-            console.error('Error saving thesis:', error);
-            throw new Error('Could not save thesis');
+        } catch (err) {
+            return {ok: false, message: `Could not save thesis: ${err}`}
+        }
+    }    
+
+    /**
+     * Removes a thesis from the user's "library"
+     * @param {Object} params - parameters for the function.
+     * @param {string} params.userId - user's ID given by Google OAuth.
+     * @param {string} params.thesesId - thesis' unique version 4 UUID. 
+     */
+    async removeThesisFromSaved(params) {
+        const { userId, thesisId } = params;
+        const deleteQuery = `
+            DELETE FROM user_saved_theses
+            WHERE user_id = $1 AND thesis_id = $2;
+        `;
+
+        try {
+            const deleteResult = await this.pool.query(deleteQuery, [userId, thesisId]);
+            
+            if (deleteResult.rowCount > 0) {
+                return { ok: true, message: 'Thesis removed successfully.' };
+            } else {
+                return { ok: false, message: 'Thesis not found in library.' };
+            }
+        } catch (err) {
+            return {ok: false, message: `Could not remove thesis: ${err}`}
         }
     }
 
@@ -170,20 +195,20 @@ class RDS {
      * @param {Object} params - parameters for the function.
      * @param {string} params.title - thesis' title.
      * @param {Array} params.authors - thesis' author/s.
-     * @param {string} params.pages - how many pages the thesis is.
      * @param {Array} params.keywords - keywords that describes the thesis. Commonly found in abstract pages.
      * @param {string} params.id - unique version 4 UUID that gives the thesis its identification.
      * @param {string} params.year - the year the thesis is published.
+     * @param {string} params.abstract - Thesis' abstract, usually around 200-300 words.
      */
     async addThesis(params) {
-        const { title, authors, pages, abstract, keywords, id, year } = params;
+        const { title, authors, abstract, keywords, id, year } = params;
     
         const thesisInsertQuery = `
-            INSERT INTO theses (id, title, pages, abstract, year)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO theses (id, title, abstract, year)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (id) DO NOTHING;`;
     
-        await this.pool.query(thesisInsertQuery, [id, title, pages, abstract, year]);
+        await this.pool.query(thesisInsertQuery, [id, title, abstract, year]);
     
         for (const name of authors) {
             const authorSelectQuery = `
@@ -193,7 +218,6 @@ class RDS {
             let authorId;
             if (authorResult.rowCount > 0) {
                 authorId = authorResult.rows[0].id;
-                console.log(`Author already exists: ${name} with ID: ${authorId}`);
             } else {
                 authorId = uuidv4();
                 const authorInsertQuery = `
@@ -201,7 +225,6 @@ class RDS {
                     VALUES ($1, $2)
                     ON CONFLICT (name) DO NOTHING;`;
                 
-                console.log(`Inserting new author: ${name} with ID: ${authorId}`);
                 await this.pool.query(authorInsertQuery, [authorId, name]);
             }
 
@@ -220,7 +243,6 @@ class RDS {
             let keywordId;
             if (keywordResult.rowCount > 0) {
                 keywordId = keywordResult.rows[0].id;
-                console.log(`Keyword already exists: ${word} with ID: ${keywordId}`);
             } else {
                 keywordId = uuidv4(); 
                 const keywordInsertQuery = `
@@ -228,7 +250,6 @@ class RDS {
                     VALUES ($1, $2)
                     ON CONFLICT (word) DO NOTHING;`;
                 
-                console.log(`Inserting new keyword: ${word} with ID: ${keywordId}`);
                 await this.pool.query(keywordInsertQuery, [keywordId, word]);
             }
     
@@ -240,7 +261,7 @@ class RDS {
             await this.pool.query(thesisKeywordInsertQuery, [id, keywordId]);
         }
     
-        return { result: 'ok' };
+        return { ok: true, message: 'Added thesis successfully.'};
     }
     
     /**
@@ -274,10 +295,9 @@ class RDS {
     
             const formattedResults = this.formatSearchResults(result.rows);
     
-            return formattedResults;
-        } catch (error) {
-            console.error("Database query error:", error);
-            throw error;
+            return {ok: true, data: formattedResults};
+        } catch (err) {
+            return {ok: false, message: err}
         }
     }
 
@@ -290,17 +310,12 @@ class RDS {
                     id: row.id,
                     title: row.title,
                     authors: [],
-                    keywords: [],
                     year: row.year,
-                    pages: row.pages
                 };
             }
     
             if (row.author_name) {
                 results[row.id].authors.push(row.author_name);
-            }
-            if (row.keyword_word) {
-                results[row.id].keywords.push(row.keyword_word);
             }
         });
     
@@ -316,7 +331,9 @@ class RDS {
      * Deletes a thesis based on its unique UUID.
      * @param {string} uuid - unique version 4 UUID of the thesis.
      */
-    async delete(uuid) {
+    async deleteThesis(uuid) {
+        const deleteThesisSavedQuery = `
+            DELETE FROM user_saved_theses WHERE thesis_id = $1`
         const deleteThesisAuthorsQuery = `
             DELETE FROM thesis_authors WHERE thesis_id = $1;`;
         const deleteThesisKeywordsQuery = `
@@ -326,11 +343,35 @@ class RDS {
         
         await this.pool.query(deleteThesisAuthorsQuery, [uuid]);
         await this.pool.query(deleteThesisKeywordsQuery, [uuid]);
+        await this.pool.query(deleteThesisSavedQuery, [uuid]);
         const result = await this.pool.query(deleteThesisQuery, [uuid]);
         
-        return result.rowCount > 0;
+        if (result.rowCount > 0) {
+            return {ok: true, message: 'Deleted thesis successfully.'}
+        } else {
+            return {ok: false, message: 'Unable to delete thesis.'}
+        }
     }
 
+    /**
+     * Gets the thesis' information based on its UUID.
+     * @param {string} uuid - unique version 4 UUID of the thesis. 
+     * @returns {Promise<Object>} - information of the thesis.
+     */
+    async thesisInfo(uuid) {
+        const thesisInformationQuery = `SELECT * FROM theses WHERE id=$1`;
+        try {
+            const result = await this.pool.query(thesisInformationQuery, [uuid]);
+            return {ok: true, data: result.rows}
+        } catch (err) {
+            return {ok: false, message: `Could not get thesis information: ${err}`}
+        }
+    }
 }
 
-module.exports = RDS
+(async () => {
+    const s = new SQL();
+    s.deleteThesis('b5951793-0bb3-45d1-bd8e-3f57c65b2853').then(res => {if (res.ok) console.log(res.message)});
+})();
+
+module.exports = SQL
