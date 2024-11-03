@@ -50,9 +50,9 @@ const SQLClass = new SQL();
 initializeKeys().then(() => {
     const userJWT = jwt.sign(
         {
-            userId: verifiedToken.sub,
-            name: verifiedToken.given_name,
-            picture: verifiedToken.picture,
+            userId: '6478217814931353',
+            name: "JHAL ALBERT BERIOSO",
+            picture: "SAMPLE",
             iat: Math.floor(Date.now() / 1000), // Issued at
             exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7) // Expiration time
         },
