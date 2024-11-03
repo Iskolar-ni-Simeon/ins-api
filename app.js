@@ -50,6 +50,9 @@ const SQLClass = new SQL();
 initializeKeys().then(() => {
     console.log(userJWT);
     console.log('keys initialized')
+    app.use('/', (req, res, next) => {
+        res.send("Hello, world!");
+    });
     require('./routes/authenticationRoute.js')(app, privateKey, SQLClass);
     require('./routes/thesisRoute.js')(app, B2Class, SQLClass, JWTMiddleware, publicKey);
     require('./routes/userRoute.js')(app, B2Class, SQLClass, JWTMiddleware, publicKey);
