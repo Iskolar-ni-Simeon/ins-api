@@ -368,10 +368,4 @@ class SQL {
         }
     }
 }
-
-(async () => {
-    const s = new SQL();
-    s.deleteThesis('b5951793-0bb3-45d1-bd8e-3f57c65b2853').then(res => {if (res.ok) console.log(res.message)});
-})();
-
 module.exports = SQL
