@@ -12,9 +12,5 @@
             "dest": "api/index.js"
         }
     ],
-    "hooks": {
-        "build": {
-            "command": "npm run build"
-        }
-    }
+    "buildCommand" : "npm install backblaze-b2"
 }
