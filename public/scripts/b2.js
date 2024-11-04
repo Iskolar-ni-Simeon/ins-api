@@ -91,26 +91,26 @@ class B2 {
      */
     async deleteFile(uuid) {
         await this.ensureAuthorization();
-
         try {
             const versionsResponse = await this.b2.listFileVersions({
                 bucketId: this.bucketId,
                 fileName: `${uuid}.pdf`,
             });
 
-            const fileId = versionsResponse.data.files[0]?.fileId;
-            if (!fileId) {
-                return {ok: false, message: 'File not found in B2 bucket.'}
+            const file = versionsResponse.data.files.find(file => file.fileName === `${uuid}.pdf`);
+            if (!file) {
+                console.log('File not found in B2 bucket.');
+                return { ok: false, message: 'File not found in B2 bucket.' };
             }
-
+    
             await this.b2.deleteFileVersion({
-                fileId: fileId,
-                fileName: `${uuid}.pdf`
+                fileId: file.fileId,
+                fileName: file.fileName
             });
-
-            return {ok: true, message: 'Successfully deleted file.'}
+            return { ok: true, message: 'Successfully deleted file.' };
         } catch (err) {
-            return {ok: false, message: `Unable to delete file: ${err}`}
+            console.error('Unable to delete file:', err);
+            return { ok: false, message: `Unable to delete file: ${err}` };
         }
     }
 

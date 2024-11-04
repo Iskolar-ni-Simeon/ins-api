@@ -73,16 +73,19 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
 
     app.post('/delete', JWTMiddleware(publicKey), async (req, res, next) => {
         try {
-            const uuid = req.body.thesisId;
+            const uuid = req.body.uuid;
+            if (!uuid) {
+                return res.status(400).json({ error: 'UUID is required' });
+            }
+    
             const fileStatus = await B2.deleteFile(uuid);
-            if (!fileStatus.ok) return res.status(500).json({data: fileStatus.message});
+            if (!fileStatus.ok) return res.status(500).json({ data: fileStatus.message });
             const databaseStatus = await SQL.deleteThesis(uuid);
-            if (!databaseStatus.ok) return res.status(500).json({data: databaseStatus.message});
-            return res.json({file: fileStatus, database: databaseStatus});
+            if (!databaseStatus.ok) return res.status(500).json({ data: databaseStatus.message });
+            return res.json({ file: fileStatus, database: databaseStatus });
         } catch (err) {
-            console.error('Error: ', err)
-            return res.status(500).json({ error: `Internal server error: ${err}`});
+            console.error('Error: ', err);
+            return res.status(500).json({ error: `Internal server error: ${err}` });
         }
-
     });
 }
