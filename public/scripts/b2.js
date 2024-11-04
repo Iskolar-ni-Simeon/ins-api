@@ -99,7 +99,6 @@ class B2 {
 
             const file = versionsResponse.data.files.find(file => file.fileName === `${uuid}.pdf`);
             if (!file) {
-                console.log('File not found in B2 bucket.');
                 return { ok: false, message: 'File not found in B2 bucket.' };
             }
     

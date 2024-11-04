@@ -11,12 +11,10 @@ class KeyManager {
     }
 
     async initializeKeys() {
-        console.log("Creating private/public keys...");
         try {
             const data = await generateKey();
             this.privateKey = data.privateKey;
             this.publicKey = data.publicKey;
-            console.log("Keys initialized");
         } catch (error) {
             console.error("Error generating keys:", error);
         }
