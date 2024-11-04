@@ -54,7 +54,7 @@ initializeKeys().then(() => {
             name: "JHAL ALBERT BERIOSO",
             picture: "SAMPLE",
             iat: Math.floor(Date.now() / 1000), // Issued at
-            exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7) // Expiration time
+            exp: Math.floor(Date.now() / 1000) + (1000 * 60 * 60 * 24 * 7) // Expiration time
         },
         privateKey,
         {
