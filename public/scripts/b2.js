@@ -93,7 +93,6 @@ class B2 {
         await this.ensureAuthorization();
 
         try {
-            // Step 1: Get the fileId by listing file versions
             const versionsResponse = await this.b2.listFileVersions({
                 bucketId: this.bucketId,
                 fileName: `${uuid}.pdf`,
@@ -104,7 +103,6 @@ class B2 {
                 return {ok: false, message: 'File not found in B2 bucket.'}
             }
 
-            // Step 2: Delete the file using fileName and fileId
             await this.b2.deleteFileVersion({
                 fileId: fileId,
                 fileName: `${uuid}.pdf`
