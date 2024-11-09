@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const jwkToPem = require('jwk-to-pem');
-const SQL = require('../public/scripts/sql');
 
 module.exports = (app, privateKey, sql) => {
     app.post("/login", async (req, res) => {

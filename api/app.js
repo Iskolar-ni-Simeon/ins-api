@@ -56,7 +56,7 @@ const SQLClass = new SQL();
         res.send("Hello, world!");
     });
 
-    require('../routes/authenticationRoute.js')(app, keyManager.getPublicKey(), SQLClass);
+    require('../routes/authenticationRoute.js')(app, keyManager.getPrivateKey(), SQLClass);
     require('../routes/thesisRoute.js')(app, B2Class, SQLClass, JWTMiddleware, keyManager.getPublicKey());
     require('../routes/userRoute.js')(app, B2Class, SQLClass, JWTMiddleware, keyManager.getPublicKey());
 
