@@ -51,23 +51,6 @@ const SQLClass = new SQL();
 (async function initializeApp() {
 
     await keyManager.initializeKeys();
-    // create a temporary key for testing
-    const userJWT = jwt.sign(
-        {
-            userId: '6478217814931353',
-            name: "JHAL ALBERT BERIOSO",
-            picture: "SAMPLE",
-            iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (1000 * 60 * 60 * 24 * 7)
-        },
-        keyManager.getPrivateKey(), // Access private key from KeyManager
-        {
-            algorithm: 'RS256',
-        }
-    );
-    console.log(userJWT);
-    console.log('Keys are ready');
-    
 
     app.get('/', (req, res) => {
         res.send("Hello, world!");
