@@ -311,7 +311,8 @@ class SQL {
                     title: row.title,
                     authors: [],
                     year: row.year,
-                    keywords: [] // Add keywords property
+                    abstract: row.abstract, 
+                    keywords: [] 
                 };
             }
     
