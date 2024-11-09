@@ -311,18 +311,23 @@ class SQL {
                     title: row.title,
                     authors: [],
                     year: row.year,
+                    keywords: [] // Add keywords property
                 };
             }
     
             if (row.author_name) {
                 results[row.id].authors.push(row.author_name);
             }
+
+            if (row.keyword_word) {
+                results[row.id].keywords.push(row.keyword_word); // Populate keywords
+            }
         });
     
         const formattedResults = Object.values(results).map(thesis => ({
             ...thesis,
             authors: [...new Set(thesis.authors)],
-            keywords: [...new Set(thesis.keywords)],
+            keywords: [...new Set(thesis.keywords)], // Ensure unique keywords
         }));
         return formattedResults;
     }
