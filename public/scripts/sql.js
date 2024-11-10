@@ -367,7 +367,8 @@ class SQL {
     async thesisInfo(uuid) {
         const thesisInformationQuery = `
             SELECT t.id, t.title, t.year, t.abstract, 
-                   a.name AS author_name, k.word AS keyword_word
+                   a.id AS author_id, a.name AS author_name, 
+                   k.id AS keyword_id, k.word AS keyword_word
             FROM theses t
             LEFT JOIN thesis_authors ta ON t.id = ta.thesis_id
             LEFT JOIN authors a ON ta.author_id = a.id
@@ -399,16 +400,16 @@ class SQL {
         };
 
         rows.forEach(row => {
-            if (row.author_name) {
-                thesis.authors.push(row.author_name);
+            if (row.author_id && row.author_name) {
+                thesis.authors.push({ id: row.author_id, name: row.author_name });
             }
-            if (row.keyword_word) {
-                thesis.keywords.push(row.keyword_word);
+            if (row.keyword_id && row.keyword_word) {
+                thesis.keywords.push({ id: row.keyword_id, keyword: row.keyword_word });
             }
         });
 
-        thesis.authors = [...new Set(thesis.authors)];
-        thesis.keywords = [...new Set(thesis.keywords)];
+        thesis.authors = [...new Set(thesis.authors.map(a => JSON.stringify(a)))].map(a => JSON.parse(a));
+        thesis.keywords = [...new Set(thesis.keywords.map(k => JSON.stringify(k)))].map(k => JSON.parse(k));
 
         return thesis;
     }
