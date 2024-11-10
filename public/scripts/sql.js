@@ -365,13 +365,52 @@ class SQL {
      * @returns {Promise<Object>} - information of the thesis.
      */
     async thesisInfo(uuid) {
-        const thesisInformationQuery = `SELECT * FROM theses WHERE id=$1`;
+        const thesisInformationQuery = `
+            SELECT t.id, t.title, t.year, t.abstract, 
+                   a.name AS author_name, k.word AS keyword_word
+            FROM theses t
+            LEFT JOIN thesis_authors ta ON t.id = ta.thesis_id
+            LEFT JOIN authors a ON ta.author_id = a.id
+            LEFT JOIN thesis_keywords tk ON t.id = tk.thesis_id
+            LEFT JOIN keywords k ON tk.keyword_id = k.id
+            WHERE t.id = $1;
+        `;
         try {
             const result = await this.pool.query(thesisInformationQuery, [uuid]);
-            return {ok: true, data: result.rows}
+            const formattedResults = this.formatThesisInfo(result.rows);
+            return {ok: true, data: formattedResults};
         } catch (err) {
             return {ok: false, message: `Could not get thesis information: ${err}`}
         }
+    }
+
+    formatThesisInfo(rows) {
+        if (rows.length === 0) {
+            return null;
+        }
+
+        const thesis = {
+            id: rows[0].id,
+            title: rows[0].title,
+            year: rows[0].year,
+            abstract: rows[0].abstract,
+            authors: [],
+            keywords: []
+        };
+
+        rows.forEach(row => {
+            if (row.author_name) {
+                thesis.authors.push(row.author_name);
+            }
+            if (row.keyword_word) {
+                thesis.keywords.push(row.keyword_word);
+            }
+        });
+
+        thesis.authors = [...new Set(thesis.authors)];
+        thesis.keywords = [...new Set(thesis.keywords)];
+
+        return thesis;
     }
 }
 module.exports = SQL
