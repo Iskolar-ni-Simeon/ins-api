@@ -16,7 +16,6 @@ module.exports = (app, privateKey, sql) => {
             if (!key) {
                 throw new Error('Public key not found');
             }
-            const savedTheses = await sql.getUserSavedTheses(verifiedToken.sub);
             const publicKeyPem = jwkToPem(key); 
             const verifiedToken = jwt.verify(req.body.credential, publicKeyPem);
             const userJWT = jwt.sign(
@@ -24,8 +23,6 @@ module.exports = (app, privateKey, sql) => {
                     userId: verifiedToken.sub,
                     name: verifiedToken.given_name,
                     picture: verifiedToken.picture,
-                    email: verifiedToken.email,
-                    savedTheses: savedTheses,
                     iat: Math.floor(Date.now() / 1000), // Issued at
                     exp: Math.floor(Date.now() / 1000) + (60 * 60) // Expiration time
                 },
@@ -36,7 +33,8 @@ module.exports = (app, privateKey, sql) => {
             );
             console.log(decodedToken);
             await sql.addUser({id: verifiedToken.sub, email: verifiedToken.email, name: verifiedToken.name});
-            return res.json({ token: verifiedToken, jwtToken: userJWT, publicKey: publicKeyPem});
+            const savedTheses = await sql.getUserSavedTheses(verifiedToken.sub);
+            return res.json({ token: verifiedToken, jwtToken: userJWT, saved: savedTheses});
         } catch (err) {
             console.error('Token validation error: ', err);
             return res.status(500).json({ error: err.message });
