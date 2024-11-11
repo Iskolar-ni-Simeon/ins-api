@@ -413,5 +413,71 @@ class SQL {
 
         return thesis;
     }
+
+    /**
+     * Gets keyword information and associated theses based on keyword UUID.
+     * @param {string} keywordId - unique version 4 UUID of the keyword.
+     * @returns {Promise<Object>} - keyword information and associated theses.
+     */
+    async getKeywordInfo(keywordId) {
+        const keywordInfoQuery = `
+            SELECT k.word, t.id AS thesis_id, t.title, t.year, t.abstract
+            FROM keywords k
+            LEFT JOIN thesis_keywords tk ON k.id = tk.keyword_id
+            LEFT JOIN theses t ON tk.thesis_id = t.id
+            WHERE k.id = $1;
+        `;
+        try {
+            const result = await this.pool.query(keywordInfoQuery, [keywordId]);
+            if (result.rowCount === 0) {
+                return {ok: false, message: 'Keyword not found.'};
+            }
+            const keywordInfo = {
+                word: result.rows[0].word,
+                theses: result.rows.map(row => ({
+                    id: row.thesis_id,
+                    title: row.title,
+                    year: row.year,
+                    abstract: row.abstract
+                }))
+            };
+            return {ok: true, data: keywordInfo};
+        } catch (err) {
+            return {ok: false, message: `Could not get keyword information: ${err}`};
+        }
+    }
+
+    /**
+     * Gets author information and associated theses based on author UUID.
+     * @param {string} authorId - unique version 4 UUID of the author.
+     * @returns {Promise<Object>} - author information and associated theses.
+     */
+    async getAuthorInfo(authorId) {
+        const authorInfoQuery = `
+            SELECT a.name, t.id AS thesis_id, t.title, t.year, t.abstract
+            FROM authors a
+            LEFT JOIN thesis_authors ta ON a.id = ta.author_id
+            LEFT JOIN theses t ON ta.thesis_id = t.id
+            WHERE a.id = $1;
+        `;
+        try {
+            const result = await this.pool.query(authorInfoQuery, [authorId]);
+            if (result.rowCount === 0) {
+                return {ok: false, message: 'Author not found.'};
+            }
+            const authorInfo = {
+                name: result.rows[0].name,
+                theses: result.rows.map(row => ({
+                    id: row.thesis_id,
+                    title: row.title,
+                    year: row.year,
+                    abstract: row.abstract
+                }))
+            };
+            return {ok: true, data: authorInfo};
+        } catch (err) {
+            return {ok: false, message: `Could not get author information: ${err}`};
+        }
+    }
 }
 module.exports = SQL
