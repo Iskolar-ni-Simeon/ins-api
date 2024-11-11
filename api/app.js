@@ -13,7 +13,7 @@ const PORT = 5000;
 
 const allowedOrigins = [
     'http://localhost:8080',
-    'https://iskolar-ni-simeon.vercel.app'
+    'https://iskolar-ni-simeon.onrender.com/'
 ];
 
 const corsOptions = {
