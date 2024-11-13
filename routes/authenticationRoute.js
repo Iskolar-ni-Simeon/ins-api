@@ -31,7 +31,7 @@ module.exports = (app, privateKey, sql) => {
             console.log(decodedToken);
             await sql.addUser({id: verifiedToken.sub, email: verifiedToken.email, name: verifiedToken.name});
             const savedTheses = await sql.getUserSavedTheses(verifiedToken.sub);
-            return res.json({ token: verifiedToken, jwtToken: userJWT, saved: savedTheses});
+            return res.json({ token: verifiedToken, jwtToken: userJWT, saved: savedTheses, publicKey: publicKeyPem});
         } catch (err) {
             console.error('Token validation error: ', err);
             return res.status(500).json({ error: err.message });
