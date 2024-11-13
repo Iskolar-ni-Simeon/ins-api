@@ -9,9 +9,6 @@ module.exports = (app, privateKey, sql) => {
 
             const decodedToken = jwt.decode(req.body.credential, { complete: true });
             
-            if (decodedToken.payload.aud !== process.env.GOOGLE_OAUTH_CLIENT_ID) {
-                return res.status(401).json({ error: 'Invalid audience' });
-            }
             const key = keys.keys.find(k => k.kid === decodedToken.header.kid);
             if (!key) {
                 throw new Error('Public key not found');
