@@ -14,7 +14,7 @@ const PORT = 5000;
 // List of allowed origins
 const allowedOrigins = [
     'http://localhost:8080',
-    'https://iskolar-ni-simeon.onrender.com'
+    'https://iskolar-ni-simeon.vercel.app'
 ];
 
 // CORS options configuration
