@@ -70,8 +70,8 @@ class SQL {
         
         const createSessionsTable = `
             CREATE TABLE IF NOT EXISTS sessions (
-                session_id VARCHAR(255) PRIMARY KEY,
-                user_id VARCHAR(255) NOT NULL,
+                user_id VARCHAR(255) PRIMARY KEY,
+                session_id VARCHAR(255) NOT NULL,
                 profile TEXT,
                 created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
                 expires_at TIMESTAMPTZ,
