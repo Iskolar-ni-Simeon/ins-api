@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 class SQL {
@@ -66,6 +67,16 @@ class SQL {
                 user_id VARCHAR REFERENCES "users"(id),
                 thesis_id VARCHAR REFERENCES theses(id)
             );`;
+        
+        const createSessionsTable = `
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_id VARCHAR(255) PRIMARY KEY,
+                user_id VARCHAR(255) NOT NULL,
+                profile TEXT,
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMPTZ,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );`;
 
         const queries = [
             createAuthorsTable,
@@ -74,7 +85,8 @@ class SQL {
             createUserTable,
             createThesisAuthorsTable,
             createThesisKeywordsTable,
-            createSavedThesesTable
+            createSavedThesesTable,
+            createSessionsTable
         ];
 
         for (const query of queries) {
@@ -480,4 +492,10 @@ class SQL {
         }
     }
 }
+
+(async () => {
+    const s = new SQL();
+    await s.createTables();
+})();
+
 module.exports = SQL
