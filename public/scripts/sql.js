@@ -493,9 +493,4 @@ class SQL {
     }
 }
 
-(async () => {
-    const s = new SQL();
-    await s.createTables();
-})();
-
 module.exports = SQL
