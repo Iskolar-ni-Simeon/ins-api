@@ -28,13 +28,14 @@ const corsOptions = {
             callback(new Error('Not allowed by CORS'));
         }
     },
-    methods: ['GET', 'POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
 };
 
 app.use(cors(corsOptions)); 
-app.use(express.json());    
+app.use(express.json());
+app.options('*', cors(corsOptions));
 
 console.log("Initializing B2...");
 const B2Class = new B2();
