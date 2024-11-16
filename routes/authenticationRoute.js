@@ -22,36 +22,28 @@ module.exports = (app, privateKey, sql) => {
 
             const publicKey = await importJWK(key, 'ES256');
             const payload = await jwt.verify(req.body.credential, publicKey);
-
-            console.log(payload);
-
-            // Step 7: Create your own JWT using the private key and payload
             const userJWT = jwt.sign(
                 {
                     userId: payload.sub,
                     name: payload.given_name,
                     picture: payload.picture,
                     iat: Math.floor(Date.now() / 1000),
-                    exp: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour expiration
+                    exp: Math.floor(Date.now() / 1000) + 60 * 60
                 },
                 privateKey,
                 {
-                    algorithm: 'ES256', // ES256 is used for JWT with ES key pairs
+                    algorithm: 'ES256',
                 }
             );
 
-            // Step 8: Get user saved theses from the database
             const savedTheses = await sql.getUserSavedTheses(payload.sub);
-
-            // Step 9: Store user information in your database
             await sql.addUser({
                 id: payload.sub,
                 name: payload.given_name,
                 email: payload.email,
                 picture: payload.picture
             });
-
-            // Step 10: Respond with user information, saved theses, and the created JWT
+            
             return res.json({
                 token: payload, 
                 jwtToken: userJWT, 
