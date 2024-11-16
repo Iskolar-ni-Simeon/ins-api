@@ -422,10 +422,12 @@ class SQL {
      */
     async getKeywordInfo(keywordId) {
         const keywordInfoQuery = `
-            SELECT k.word, t.id AS thesis_id, t.title, t.year, t.abstract
+            SELECT t.*, a.name AS author_name, k.word AS keyword_word
             FROM keywords k
             LEFT JOIN thesis_keywords tk ON k.id = tk.keyword_id
             LEFT JOIN theses t ON tk.thesis_id = t.id
+            LEFT JOIN thesis_authors ta ON t.id = ta.thesis_id
+            LEFT JOIN authors a ON ta.author_id = a.id
             WHERE k.id = $1;
         `;
         try {
@@ -433,16 +435,14 @@ class SQL {
             if (result.rowCount === 0) {
                 return {ok: false, message: 'Keyword not found.'};
             }
-            const keywordInfo = {
-                word: result.rows[0].word,
-                theses: result.rows.map(row => ({
-                    id: row.thesis_id,
-                    title: row.title,
-                    year: row.year,
-                    abstract: row.abstract
-                }))
+            const formattedResults = this.formatSearchResults(result.rows);
+            return {
+                ok: true,
+                data: {
+                    word: result.rows[0].keyword_word,
+                    theses: formattedResults
+                }
             };
-            return {ok: true, data: keywordInfo};
         } catch (err) {
             return {ok: false, message: `Could not get keyword information: ${err}`};
         }
@@ -455,10 +455,12 @@ class SQL {
      */
     async getAuthorInfo(authorId) {
         const authorInfoQuery = `
-            SELECT a.name, t.id AS thesis_id, t.title, t.year, t.abstract
+            SELECT t.*, a.name AS author_name, k.word AS keyword_word
             FROM authors a
             LEFT JOIN thesis_authors ta ON a.id = ta.author_id
             LEFT JOIN theses t ON ta.thesis_id = t.id
+            LEFT JOIN thesis_keywords tk ON t.id = tk.thesis_id
+            LEFT JOIN keywords k ON tk.keyword_id = k.id
             WHERE a.id = $1;
         `;
         try {
@@ -466,16 +468,14 @@ class SQL {
             if (result.rowCount === 0) {
                 return {ok: false, message: 'Author not found.'};
             }
-            const authorInfo = {
-                name: result.rows[0].name,
-                theses: result.rows.map(row => ({
-                    id: row.thesis_id,
-                    title: row.title,
-                    year: row.year,
-                    abstract: row.abstract
-                }))
+            const formattedResults = this.formatSearchResults(result.rows);
+            return {
+                ok: true,
+                data: {
+                    name: result.rows[0].author_name,
+                    theses: formattedResults
+                }
             };
-            return {ok: true, data: authorInfo};
         } catch (err) {
             return {ok: false, message: `Could not get author information: ${err}`};
         }
