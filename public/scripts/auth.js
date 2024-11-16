@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { generateKeyPair } = require('crypto');
+const { generateKeyPairSync } = require('crypto');
 require('dotenv').config();
 
 
@@ -15,7 +15,7 @@ const JWTMiddleware = (publicKey) => {
 
         const token = authHeader.split(" ")[1];
         try {
-            const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+            const decoded = jwt.verify(token, publicKey, { algorithms: ['ES256'] });
             req.user = decoded;
             next();
         } catch (err) {
@@ -28,21 +28,4 @@ const JWTMiddleware = (publicKey) => {
     };
 };
 
-function generateKey() {
-    return new Promise((resolve, reject) => {
-        generateKeyPair('rsa', {
-            modulusLength: 2048,
-        }, (err, pub, priv) => {
-            if (err) {
-                console.error('Error generating keys:', err);
-                return reject(err);
-            }
-            resolve({
-                publicKey: pub.export({ type: 'spki', format: 'pem' }),
-                privateKey: priv.export({ type: 'pkcs8', format: 'pem' }),
-            });
-        });
-    });
-}
-
-module.exports = { generateKey, JWTMiddleware }
+module.exports = { JWTMiddleware }

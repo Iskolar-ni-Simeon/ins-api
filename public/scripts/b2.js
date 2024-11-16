@@ -115,4 +115,4 @@ class B2 {
 
 }
 
-module.exports = B2
+module.exports = {B2}

@@ -67,17 +67,7 @@ class SQL {
                 user_id VARCHAR REFERENCES "users"(id),
                 thesis_id VARCHAR REFERENCES theses(id)
             );`;
-        
-        const createSessionsTable = `
-            CREATE TABLE IF NOT EXISTS sessions (
-                user_id VARCHAR(255) PRIMARY KEY,
-                session_id VARCHAR(255) NOT NULL,
-                profile TEXT,
-                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                expires_at TIMESTAMPTZ,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            );`;
-
+    
         const queries = [
             createAuthorsTable,
             createKeywordsTable,
@@ -85,8 +75,7 @@ class SQL {
             createUserTable,
             createThesisAuthorsTable,
             createThesisKeywordsTable,
-            createSavedThesesTable,
-            createSessionsTable
+            createSavedThesesTable
         ];
 
         for (const query of queries) {
@@ -493,4 +482,4 @@ class SQL {
     }
 }
 
-module.exports = SQL
+module.exports = { SQL };
