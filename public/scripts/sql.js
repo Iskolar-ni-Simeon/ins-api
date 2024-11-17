@@ -455,31 +455,71 @@ class SQL {
      */
     async getAuthorInfo(authorId) {
         const authorInfoQuery = `
-            SELECT t.*, a.name AS author_name, k.word AS keyword_word
-            FROM authors a
-            LEFT JOIN thesis_authors ta ON a.id = ta.author_id
+            SELECT 
+                t.id AS thesis_id, 
+                t.title, 
+                t.year, 
+                t.abstract,
+                main_a.name AS author_name,
+                k.word AS keyword_word,
+                co_a.name AS co_author_name
+            FROM authors main_a
+            LEFT JOIN thesis_authors ta ON main_a.id = ta.author_id
             LEFT JOIN theses t ON ta.thesis_id = t.id
             LEFT JOIN thesis_keywords tk ON t.id = tk.thesis_id
             LEFT JOIN keywords k ON tk.keyword_id = k.id
-            WHERE a.id = $1;
+            LEFT JOIN thesis_authors co_ta ON t.id = co_ta.thesis_id
+            LEFT JOIN authors co_a ON co_ta.author_id = co_a.id
+            WHERE main_a.id = $1;
         `;
         try {
             const result = await this.pool.query(authorInfoQuery, [authorId]);
             if (result.rowCount === 0) {
-                return {ok: false, message: 'Author not found.'};
+                return { ok: false, message: 'Author not found.' };
             }
-            const formattedResults = this.formatSearchResults(result.rows);
+            const thesesMap = new Map();
+    
+            result.rows.forEach(row => {
+                if (!thesesMap.has(row.thesis_id)) {
+                    thesesMap.set(row.thesis_id, {
+                        id: row.thesis_id,
+                        title: row.title,
+                        year: row.year,
+                        abstract: row.abstract,
+                        authors: new Set(),
+                        keywords: new Set(),
+                    });
+                }
+    
+                const thesis = thesesMap.get(row.thesis_id);
+    
+                if (row.co_author_name) {
+                    thesis.authors.add(row.co_author_name);
+                }
+
+                if (row.keyword_word) {
+                    thesis.keywords.add(row.keyword_word);
+                }
+            });
+    
+            const formattedTheses = Array.from(thesesMap.values()).map(thesis => ({
+                ...thesis,
+                authors: Array.from(thesis.authors),
+                keywords: Array.from(thesis.keywords),
+            }));
+    
             return {
                 ok: true,
                 data: {
                     name: result.rows[0].author_name,
-                    theses: formattedResults
-                }
+                    theses: formattedTheses,
+                },
             };
         } catch (err) {
-            return {ok: false, message: `Could not get author information: ${err}`};
+            return { ok: false, message: `Could not get author information: ${err.message}` };
         }
-    }
+    }    
+    
 }
 
 module.exports = { SQL };

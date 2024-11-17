@@ -9,8 +9,6 @@ const {SQL} = require('../public/scripts/sql.js');
 const { JWTMiddleware } = require('../public/scripts/auth.js');
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, '\n');
 const publicKey = process.env.PUBLIC_KEY.replace(/\\n/g, '\n');
-console.log("Private key: ", privateKey);
-console.log("Public key: ", publicKey);
 
 const app = express();
 const PORT = 5000;
@@ -41,6 +39,7 @@ console.log("Initializing B2...");
 const B2Class = new B2();
 console.log("Initializing SQL...");
 const SQLClass = new SQL();
+
 
 (async function initializeApp() {
 

@@ -92,7 +92,6 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
     app.get("/author", JWTMiddleware(publicKey), async (req, res, next) => {
         try {
             const author = req.query.uuid;
-            console.log(author);
             const results = await SQL.getAuthorInfo(author);
             if (!results.ok) return res.status(500).json({data: results.message});
             return res.json(results);
