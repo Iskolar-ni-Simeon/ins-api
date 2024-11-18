@@ -2,10 +2,6 @@ const { v4: uuid4 } = require('uuid');
 const multer = require('multer');
 const upload = multer();
 
-/**
- * Checked: 03/11/2024, 9:31PM
- * Functional: ALL
- */
 
 module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
     app.get('/search', JWTMiddleware(publicKey), async (req, res, next) => {
@@ -108,6 +104,40 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
             return res.json(results);
         } catch (err) {
             return res.status(500).json({'error': err})
+        }
+    });
+    
+    app.post('/advanced', JWTMiddleware(publicKey), async (req, res, next) => {
+        var authors = req.body.authors || "";
+        var keywords = req.body.keywords || "";
+        var absContains = req.body.absContains || "";
+        var titleContains = req.body.titleContains || "";
+        var beforeYear = req.body.beforeYear || 0;
+        var afterYear = req.body.afterYear || 9999;
+
+        if (typeof authors === 'string') {
+            authors = authors.split(/,\s*/);
+        }
+        if (typeof keywords === 'string') {
+            keywords = keywords.split(/,\s*/);
+        }
+
+        console.log(authors, keywords, absContains, titleContains, beforeYear, afterYear); // Log parameters
+
+        const SQLParams = {
+            authors: authors,
+            keywords: keywords,
+            absContains: absContains,
+            titleContains: titleContains,
+            beforeYear: beforeYear,
+            afterYear: afterYear
+        };
+        try {
+            const result = await SQL.advancedSearch(SQLParams);
+            if (!result.ok) return res.status(500).json({data: result.message});
+            return res.json(result);
+        } catch (err) {
+            return res.status(500).json({error: err})
         }
     });
 }

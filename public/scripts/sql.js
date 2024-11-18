@@ -273,7 +273,7 @@ class SQL {
      * @returns {Promise<Object>} - returns the search results.
      */
     async search(params) {
-        const {title, author} = params
+        const {title, author} = params;
         const query = `
             SELECT f.*, a.name AS author_name, k.word AS keyword_word
             FROM theses f
@@ -281,24 +281,21 @@ class SQL {
             LEFT JOIN authors a ON ta.author_id = a.id
             LEFT JOIN thesis_keywords tk ON f.id = tk.thesis_id
             LEFT JOIN keywords k ON tk.keyword_id = k.id
-            WHERE f.title ILIKE $1`;
+            WHERE f.title ILIKE $1
+            ${author ? 'AND a.name ILIKE $2' : ''};
+        `;
     
         const values = [`%${title}%`];
+        if (author) {
+            values.push(`%${author}%`);
+        }
     
         try {
-            let result;
-            if (author) {
-                const authorFilter = ` AND a.name ILIKE $2`;
-                result = await this.pool.query(query + authorFilter, [...values, `%${author}%`]);
-            } else {
-                result = await this.pool.query(query, values);
-            }
-    
+            const result = await this.pool.query(query, values);
             const formattedResults = this.formatSearchResults(result.rows);
-    
             return {ok: true, data: formattedResults};
         } catch (err) {
-            return {ok: false, message: err}
+            return {ok: false, message: err};
         }
     }
 
@@ -518,8 +515,60 @@ class SQL {
         } catch (err) {
             return { ok: false, message: `Could not get author information: ${err.message}` };
         }
-    }    
-    
+    }
+
+    /** Advanced search function
+     * @param {Object} params - parameters for the function.
+     * @param {string} params.titleContains - keyword to search for in the title.
+     * @param {string} params.absContains - keyword to search for in the abstract.
+     * @param {Array} params.authors - list of authors to search for.
+     * @param {Array} params.keywords - list of keywords to search for.
+     * @param {string} params.beforeYear - year to search for theses published before.
+     * @param {string} params.afterYear - year to search for theses published after.
+     * @returns {Promise<Object>} - search results. 
+     */
+    async advancedSearch(params) {
+        const {titleContains = "", absContains = "", authors = [], keywords = [], beforeYear = 0, afterYear = 9999} = params;
+
+        const query = `
+            SELECT t.*, a.name AS author_name, k.word AS keyword_word, co_a.name AS co_author_name
+            FROM theses t
+            LEFT JOIN thesis_authors ta ON t.id = ta.thesis_id
+            LEFT JOIN authors a ON ta.author_id = a.id
+            LEFT JOIN thesis_keywords tk ON t.id = tk.thesis_id
+            LEFT JOIN keywords k ON tk.keyword_id = k.id
+            LEFT JOIN thesis_authors co_ta ON t.id = co_ta.thesis_id
+            LEFT JOIN authors co_a ON co_ta.author_id = co_a.id
+            WHERE t.title ILIKE $1
+            AND t.abstract ILIKE $2
+        `;
+
+        const values = [`%${titleContains}%`, `%${absContains}%`];
+
+        try {
+            const result = await this.pool.query(query, values);
+
+            const filteredResults = result.rows.filter(row => {
+                const thesisYear = parseInt(row.year, 10);
+                const matchesAuthors = authors.length === 0 || authors.some(author => {
+                    const match = (row.author_name && row.author_name.toLowerCase().includes(author.toLowerCase())) ||
+                                  (row.co_author_name && row.co_author_name.toLowerCase().includes(author.toLowerCase()));
+                    return match;
+                });
+                const matchesKeywords = keywords.length === 0 || keywords.some(keyword => {
+                    const match = row.keyword_word && row.keyword_word.includes(keyword);
+                    return match;
+                });
+                const matchesYear = thesisYear >= beforeYear && thesisYear <= afterYear;
+                return matchesYear && matchesAuthors && matchesKeywords;
+            });
+
+            const formattedResults = this.formatSearchResults(filteredResults);
+            return {ok: true, data: formattedResults};
+        } catch (err) {
+            return {ok: false, message: err};
+        }
+    }
 }
 
 module.exports = { SQL };
