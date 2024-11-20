@@ -4,18 +4,19 @@ require('dotenv').config();
 
 
 const JWTMiddleware = (publicKey) => {
+    
     return (req, res, next) => {
+        
         if (!publicKey) {
             return res.status(500).json({ message: 'Public key is required for verification' });
         }
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        const authHeader = req.cookies.authorization ? req.cookies.authorization : req.headers.authorization;
+        if (!authHeader) {
             return res.status(401).json({ message: 'Access token required' });
         }
 
-        const token = authHeader.split(" ")[1];
         try {
-            const decoded = jwt.verify(token, publicKey, { algorithms: ['ES256'] });
+            const decoded = jwt.verify(authHeader, publicKey, { algorithms: ['ES256'] });
             req.user = decoded;
             next();
         } catch (err) {

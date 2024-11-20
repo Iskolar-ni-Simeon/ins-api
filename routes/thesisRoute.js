@@ -8,7 +8,6 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
         try {
             const SQLParams = {
                 title: req.query.q || "",
-                author: req.query.author || ""
             };
             const result = await SQL.search(SQLParams)
             if (!result.ok) return res.status(500).json({data: result.message});

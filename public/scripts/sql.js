@@ -107,22 +107,22 @@ class SQL {
     
     async getUserSavedTheses(userId) {
         const query = `
-            SELECT t.id, t.title, t.year
+            SELECT t.*, a.name AS author_name, k.word AS keyword_word
             FROM user_saved_theses ust
             JOIN theses t ON ust.thesis_id = t.id
+            LEFT JOIN thesis_authors ta ON t.id = ta.thesis_id
+            LEFT JOIN authors a ON ta.author_id = a.id
+            LEFT JOIN thesis_keywords tk ON t.id = tk.thesis_id
+            LEFT JOIN keywords k ON tk.keyword_id = k.id
             WHERE ust.user_id = $1;
         `;
     
         try {
             const result = await this.pool.query(query, [userId]);
-    
-            if (result.rowCount > 0) {
-                return {ok: true, data: result.rows}
-            } else {
-                return {ok: true, data: []}; 
-            }
+            const formattedResults = this.formatSearchResults(result.rows);
+            return {ok: true, data: formattedResults};
         } catch (err) {
-            return {ok: false, message: `Unable to fetch saved thesis: ${err}`}
+            return {ok: false, message: `Unable to fetch saved thesis: ${err}`};
         }
     }
     

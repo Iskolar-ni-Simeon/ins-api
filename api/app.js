@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const {B2} = require('../public/scripts/b2.js');
@@ -34,6 +35,7 @@ const corsOptions = {
 app.use(cors(corsOptions)); 
 app.use(express.json());
 app.options('*', cors(corsOptions));
+app.use(cookieParser());
 
 console.log("Initializing B2...");
 const B2Class = new B2();
