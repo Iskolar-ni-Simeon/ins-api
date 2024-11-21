@@ -18,6 +18,7 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
+    credentials: true,
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
             callback(null, origin);
@@ -27,7 +28,6 @@ const corsOptions = {
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With', 'Accept'],
-    credentials: true,
 };
 
 app.use(cors(corsOptions)); 
@@ -39,7 +39,6 @@ app.use((req, res, next) => {
 
 app.options('*', cors(corsOptions));
 app.use(cookieParser());
-
 console.log("Initializing B2...");
 const B2Class = new B2();
 console.log("Initializing SQL...");
