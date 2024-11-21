@@ -10,6 +10,8 @@ const JWTMiddleware = (publicKey) => {
         if (!publicKey) {
             return res.status(500).json({ message: 'Public key is required for verification' });
         }
+        console.log(`headers: ${req.headers.authorization}`);
+        console.log(`cookies: ${req.cookies.authorization}`);
         const authHeader = req.cookies.authorization ? req.cookies.authorization : req.headers.authorization;
         if (!authHeader) {
             return res.status(401).json({ message: 'Access token required' });
