@@ -19,14 +19,12 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
         try {
             const thesisId = req.body.thesisId
             const userId = req.body.userId;
-            console.log(req.body);
             if (req.body.method === "add") {
                     const results = await SQL.addThesisToSaved({
                     userId: userId,
                     thesisId: thesisId
                 });
                 if (!results.ok) return res.status(500).json({data: results.message});
-                console.log(results);
                 return res.json(results);
             } else if (req.body.method === "remove") {
                 const results = await SQL.removeThesisFromSaved({
@@ -34,7 +32,6 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
                     thesisId: thesisId
                 });
                 if (!results.ok) return res.status(500).json({data: results.message});
-                console.log(results);
                 return res.json(results);
             }
             

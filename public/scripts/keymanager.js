@@ -9,4 +9,3 @@ function generateKey() {
 }
 
 const g = generateKey();
-console.log(g);

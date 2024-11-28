@@ -1,7 +1,10 @@
 const { v4: uuid4 } = require('uuid');
 const multer = require('multer');
-const upload = multer();
-
+const storage = multer.memoryStorage();
+const upload = multer([
+    { storage: storage },
+    { limits: { fileSize: 50 * 1024 * 1024 } }
+]);
 
 module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
     app.get('/search', JWTMiddleware(publicKey), async (req, res, next) => {
@@ -59,7 +62,7 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
             if (!fileStatus.ok) return res.status(500).json({data: fileStatus.message});
             const databaseStatus = await SQL.addThesis(SQLUpdateParams)
             if (!databaseStatus.ok) return res.status(500).json({data: databaseStatus.message});
-            return res.json({file: fileStatus, database: databaseStatus});
+            return res.json({file: fileStatus, database: databaseStatus, key: key});
         } catch (err) {
             console.error('Error: ', err)
             return res.status(500).json({ error: `Internal server error: ${err}`});
@@ -120,8 +123,6 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
         if (typeof keywords === 'string') {
             keywords = keywords.split(/,\s*/);
         }
-
-        console.log(authors, keywords, absContains, titleContains, beforeYear, afterYear); // Log parameters
 
         const SQLParams = {
             authors: authors,
