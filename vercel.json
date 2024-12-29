@@ -6,14 +6,15 @@
             "use": "@vercel/node"
         }
     ],
-    "routes": [
+    "rewrites": [
         {
-            "src": "/(.*)",
-            "dest": "api/app.js"
+            "source": "/api/(.*)",
+            "destination": "https://ins-api-steel.vercel.app/api/$1"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/api/app.js"
         }
     ],
-    "rewrites" : [
-        { "source": "/api/(.*)", "destination": "https://ins-api-steel.vercel.app/api/$1" }
-    ],
-    "buildCommand" : "npm install backblaze-b2"
+    "buildCommand": "npm install backblaze-b2"
 }
