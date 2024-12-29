@@ -14,7 +14,7 @@ class B2 {
             applicationKey: process.env.BUCKET_APPLICATION_KEY,
         });
         console.log("B2 initialized.");
-        
+
     }
     /**
      * Since `b2.authorize();` only lasts 24 hours, this function keeps track of the
@@ -33,13 +33,13 @@ class B2 {
 
     async getCachedUploadUrl() {
         if (!this.uploadUrl || Date.now() - this.lastAuthTime >= this.authDuration) {
-            const uploadURLResponse = await this.b2.getUploadUrl({bucketId: this.bucketId});
+            const uploadURLResponse = await this.b2.getUploadUrl({ bucketId: this.bucketId });
             this.uploadUrl = uploadURLResponse.data.uploadUrl;
             this.uploadAuthToken = uploadURLResponse.data.authorizationToken;
         }
         return { uploadUrl: this.uploadUrl, uploadAuthToken: this.uploadAuthToken };
     }
-    
+
     /**
      * Uploads the file to the S3 defined by the .env file.
      * @param {Object} params - parameters for the function.
@@ -50,14 +50,14 @@ class B2 {
         await this.ensureAuthorization();
         const { fileContent, key } = params;
         const { uploadUrl, uploadAuthToken } = await this.getCachedUploadUrl();
-        
+
         const response = this.b2.uploadFile({
             uploadUrl: uploadUrl,
             uploadAuthToken: uploadAuthToken,
             fileName: `${key}.pdf`,
             data: fileContent
-        }).then(() => {return {ok: true, message: 'File uploaded successfully.'}})
-        .catch(err => {return {ok: false, message: `Unable to upload file: ${err}`}})
+        }).then(() => { return { ok: true, message: 'File uploaded successfully.' } })
+            .catch(err => { return { ok: false, message: `Unable to upload file: ${err}` } })
         return response
     }
     /**
@@ -79,9 +79,9 @@ class B2 {
             }).then(token => token.data.authorizationToken);
 
             const downloadUrl = `${this.apiUrl}/file/${this.bucketName}/${key}.pdf?Authorization=${authToken}`;
-            return {ok: true, data: downloadUrl}
+            return { ok: true, data: downloadUrl }
         } catch (err) {
-            return {ok: false, message: `Unable to fetch access link: ${err}`}
+            return { ok: false, message: `Unable to fetch access link: ${err}` }
         }
     }
 
@@ -101,7 +101,7 @@ class B2 {
             if (!file) {
                 return { ok: false, message: 'File not found in B2 bucket.' };
             }
-    
+
             await this.b2.deleteFileVersion({
                 fileId: file.fileId,
                 fileName: file.fileName
@@ -115,4 +115,4 @@ class B2 {
 
 }
 
-module.exports = {B2}
+module.exports = { B2 }

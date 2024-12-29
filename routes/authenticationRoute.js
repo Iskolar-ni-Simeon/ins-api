@@ -8,13 +8,14 @@ module.exports = (app, privateKey, sql) => {
         try {
             const response = await fetch('https://www.googleapis.com/oauth2/v3/certs');
             const keys = await response.json();
-            const oauthToken = req.body.clientId;
-
-            if (oauthToken !== process.env.GOOGLE_OAUTH_CLIENT_ID) {
-                return res.status(401).json({ message: 'Invalid token' });
-            }
+            
             const decodedToken = jwt.decode(req.body.credential, { complete: true });
             if (!decodedToken || !decodedToken.header || !decodedToken.header.kid) {
+                return res.status(401).json({ message: 'Invalid token' });
+            }
+
+            const oauthToken = decodedToken.payload.aud;
+            if (oauthToken !== process.env.GOOGLE_OAUTH_CLIENT_ID) {
                 return res.status(401).json({ message: 'Invalid token' });
             }
 
@@ -48,11 +49,11 @@ module.exports = (app, privateKey, sql) => {
                 email: payload.email,
                 picture: payload.picture
             });
-            
+
             return res.json({
-                token: payload, 
-                jwtToken: userJWT, 
-                saved: savedTheses, 
+                token: payload,
+                jwtToken: userJWT,
+                saved: savedTheses,
                 publicKey: publicKeyPem
             });
 

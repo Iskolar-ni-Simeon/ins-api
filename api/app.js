@@ -3,8 +3,8 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
-const {B2} = require('../public/scripts/b2.js');
-const {SQL} = require('../public/scripts/sql.js');
+const { B2 } = require('../public/scripts/b2.js');
+const { SQL } = require('../public/scripts/sql.js');
 const { JWTMiddleware } = require('../public/scripts/auth.js');
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, '\n');
 const publicKey = process.env.PUBLIC_KEY.replace(/\\n/g, '\n');
@@ -30,7 +30,7 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With', 'Accept'],
 };
 
-app.use(cors(corsOptions)); 
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Credentials', 'true');
