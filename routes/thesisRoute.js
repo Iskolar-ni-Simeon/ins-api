@@ -5,8 +5,8 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
         try {
             const SQLParams = {
                 query: req.query.q || "",
-                beforeYear: req.query.beforeYear || null,
-                afterYear: req.query.afterYear || null,
+                beforeYear: req.query.beforeYear || 0,
+                afterYear: req.query.afterYear || 9999,
             };
             console.log(req.query.q);
             const result = await SQL.unifiedSearch(SQLParams)

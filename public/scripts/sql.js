@@ -491,7 +491,8 @@ class SQL {
      * @returns {Promise<Object>} - search results. 
      */
     async unifiedSearch(params) {
-        const { query = "", beforeYear = 0, afterYear = 9999 } = params;
+        const { query, beforeYear, afterYear } = params;
+        console.log(`Query: ${query}, Before: ${beforeYear}, After: ${afterYear}`);
         const sql = `
             SELECT t.*, 
                    a.name AS author_name, 

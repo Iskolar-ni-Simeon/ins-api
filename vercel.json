@@ -18,3 +18,4 @@
     ],
     "buildCommand": "npm install backblaze-b2"
 }
+ 
