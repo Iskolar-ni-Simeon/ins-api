@@ -14,7 +14,8 @@ const PORT = 5000;
 
 const allowedOrigins = [
     'http://localhost:8080',
-    'https://iskolar-ni-simeon.vercel.app'
+    'https://iskolar-ni-simeon.vercel.app',
+    'https://studious-winner-94pgqppvqg53xwpx-8080.app.github.dev/' // Codespaces URL
 ];
 
 const corsOptions = {
