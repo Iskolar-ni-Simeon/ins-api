@@ -1,8 +1,6 @@
 # Node modules
 node_modules/
 
-testfiles/
-
 *.py
 # Environment variables
 .env

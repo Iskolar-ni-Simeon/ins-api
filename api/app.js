@@ -40,9 +40,9 @@ app.use((req, res, next) => {
 
 app.options('*', cors(corsOptions));
 app.use(cookieParser());
-console.log("[INIT]: Initializing B2...");
+console.log("Initializing B2...");
 const B2Class = new B2();
-console.log("[INIT]: Initializing SQL...");
+console.log("Initializing SQL...");
 const SQLClass = new SQL();
 
 

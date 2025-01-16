@@ -13,8 +13,8 @@ class SQL {
             port: process.env.DATABASE_PORT,
             ssl: true
         });
-        console.log("[INIT]: SQL initialized.");
-        
+        console.log("SQL initialized.");
+
     }
     /**
      * Creates tables needed for the database. Must be initialized--kung na-run na siya one time, okay na.
@@ -39,7 +39,7 @@ class SQL {
                 year VARCHAR,
                 abstract TEXT
             );`;
-        
+
         const createUserTable = `
             CREATE TABLE IF NOT EXISTS users (
                 id VARCHAR PRIMARY KEY UNIQUE,
@@ -60,14 +60,14 @@ class SQL {
                 keyword_id VARCHAR REFERENCES keywords(id),
                 PRIMARY KEY (thesis_id, keyword_id)
             );`;
-        
-        
+
+
         const createSavedThesesTable = `
             CREATE TABLE IF NOT EXISTS user_saved_theses (
                 user_id VARCHAR REFERENCES "users"(id),
                 thesis_id VARCHAR REFERENCES theses(id)
             );`;
-    
+
         const queries = [
             createAuthorsTable,
             createKeywordsTable,
@@ -82,7 +82,7 @@ class SQL {
             await this.pool.query(query);
         }
     }
-    
+
     // user-related functions
     /**
      * Adds user based on Google's OAuth response.
@@ -99,12 +99,12 @@ class SQL {
         `
         const result = await this.pool.query(addUserQuery, [id, name, email])
         if (result.rowCount > 0) {
-            return {ok: true, message: "Added user successfully."}
+            return { ok: true, message: "Added user successfully." }
         } else {
-            return {ok: false, message: 'Unable to add user.'}
+            return { ok: false, message: 'Unable to add user.' }
         }
     }
-    
+
     async getUserSavedTheses(userId) {
         const query = `
             SELECT t.*, a.name AS author_name, k.word AS keyword_word
@@ -116,16 +116,16 @@ class SQL {
             LEFT JOIN keywords k ON tk.keyword_id = k.id
             WHERE ust.user_id = $1;
         `;
-    
+
         try {
             const result = await this.pool.query(query, [userId]);
             const formattedResults = this.formatSearchResults(result.rows);
-            return {ok: true, data: formattedResults};
+            return { ok: true, data: formattedResults };
         } catch (err) {
-            return {ok: false, message: `Unable to fetch saved thesis: ${err}`};
+            return { ok: false, message: `Unable to fetch saved thesis: ${err}` };
         }
     }
-    
+
     /**
      * Adds theses to user's "library."
      * @param {Object} params - parameters for the function.
@@ -137,31 +137,31 @@ class SQL {
         const thesisExistsQuery = `
             SELECT * FROM theses WHERE id = $1;
         `;
-        
+
         try {
             const thesisResult = await this.pool.query(thesisExistsQuery, [thesisId]);
-            
+
             if (thesisResult.rowCount === 0) {
                 return { success: false, message: 'Thesis does not exist.' };
             }
-            
+
             const insertQuery = `
                 INSERT INTO user_saved_theses (user_id, thesis_id)
                 VALUES ($1, $2)
                 ON CONFLICT DO NOTHING;
             `;
-    
+
             const insertResult = await this.pool.query(insertQuery, [userId, thesisId]);
-    
+
             if (insertResult.rowCount > 0) {
                 return { ok: true, message: 'Thesis saved successfully.' };
             } else {
                 return { ok: true, message: 'Thesis already saved.' };
             }
         } catch (err) {
-            return {ok: false, message: `Could not save thesis: ${err}`}
+            return { ok: false, message: `Could not save thesis: ${err}` }
         }
-    }    
+    }
 
     /**
      * Removes a thesis from the user's "library"
@@ -178,14 +178,14 @@ class SQL {
 
         try {
             const deleteResult = await this.pool.query(deleteQuery, [userId, thesisId]);
-            
+
             if (deleteResult.rowCount > 0) {
                 return { ok: true, message: 'Thesis removed successfully.' };
             } else {
                 return { ok: false, message: 'Thesis not found in library.' };
             }
         } catch (err) {
-            return {ok: false, message: `Could not remove thesis: ${err}`}
+            return { ok: false, message: `Could not remove thesis: ${err}` }
         }
     }
 
@@ -203,19 +203,19 @@ class SQL {
      */
     async addThesis(params) {
         const { title, authors, abstract, keywords, id, year } = params;
-    
+
         const thesisInsertQuery = `
             INSERT INTO theses (id, title, abstract, year)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (id) DO NOTHING;`;
-    
+
         await this.pool.query(thesisInsertQuery, [id, title, abstract, year]);
-    
+
         for (const name of authors) {
             const authorSelectQuery = `
                 SELECT id FROM authors WHERE name = $1;`;
             const authorResult = await this.pool.query(authorSelectQuery, [name]);
-            
+
             let authorId;
             if (authorResult.rowCount > 0) {
                 authorId = authorResult.rows[0].id;
@@ -225,7 +225,7 @@ class SQL {
                     INSERT INTO authors (id, name)
                     VALUES ($1, $2)
                     ON CONFLICT (name) DO NOTHING;`;
-                
+
                 await this.pool.query(authorInsertQuery, [authorId, name]);
             }
 
@@ -235,39 +235,39 @@ class SQL {
                 ON CONFLICT (thesis_id, author_id) DO NOTHING;`;
             await this.pool.query(thesisAuthorInsertQuery, [id, authorId]);
         }
-    
+
         for (const word of keywords) {
             const keywordSelectQuery = `
                 SELECT id FROM keywords WHERE word = $1;`;
             const keywordResult = await this.pool.query(keywordSelectQuery, [word]);
-            
+
             let keywordId;
             if (keywordResult.rowCount > 0) {
                 keywordId = keywordResult.rows[0].id;
             } else {
-                keywordId = uuidv4(); 
+                keywordId = uuidv4();
                 const keywordInsertQuery = `
                     INSERT INTO keywords (id, word)
                     VALUES ($1, $2)
                     ON CONFLICT (word) DO NOTHING;`;
-                
+
                 await this.pool.query(keywordInsertQuery, [keywordId, word]);
             }
-    
+
             const thesisKeywordInsertQuery = `
                 INSERT INTO thesis_keywords (thesis_id, keyword_id)
                 VALUES ($1, $2)
                 ON CONFLICT (thesis_id, keyword_id) DO NOTHING;`;
-            
+
             await this.pool.query(thesisKeywordInsertQuery, [id, keywordId]);
         }
-    
-        return { ok: true, message: 'Added thesis successfully.'};
+
+        return { ok: true, message: 'Added thesis successfully.' };
     }
 
     formatSearchResults(rows) {
         const results = {};
-        
+
         rows.forEach(row => {
             if (!results[row.id]) {
                 results[row.id] = {
@@ -275,11 +275,11 @@ class SQL {
                     title: row.title,
                     authors: [],
                     year: row.year,
-                    abstract: row.abstract, 
-                    keywords: [] 
+                    abstract: row.abstract,
+                    keywords: []
                 };
             }
-    
+
             if (row.author_name) {
                 results[row.id].authors.push(row.author_name);
             }
@@ -288,7 +288,7 @@ class SQL {
                 results[row.id].keywords.push(row.keyword_word); // Populate keywords
             }
         });
-    
+
         const formattedResults = Object.values(results).map(thesis => ({
             ...thesis,
             authors: [...new Set(thesis.authors)],
@@ -310,16 +310,16 @@ class SQL {
             DELETE FROM thesis_keywords WHERE thesis_id = $1;`;
         const deleteThesisQuery = `
             DELETE FROM theses WHERE id = $1;`;
-        
+
         await this.pool.query(deleteThesisAuthorsQuery, [uuid]);
         await this.pool.query(deleteThesisKeywordsQuery, [uuid]);
         await this.pool.query(deleteThesisSavedQuery, [uuid]);
         const result = await this.pool.query(deleteThesisQuery, [uuid]);
-        
+
         if (result.rowCount > 0) {
-            return {ok: true, message: 'Deleted thesis successfully.'}
+            return { ok: true, message: 'Deleted thesis successfully.' }
         } else {
-            return {ok: false, message: 'Unable to delete thesis.'}
+            return { ok: false, message: 'Unable to delete thesis.' }
         }
     }
 
@@ -343,9 +343,9 @@ class SQL {
         try {
             const result = await this.pool.query(thesisInformationQuery, [uuid]);
             const formattedResults = this.formatThesisInfo(result.rows);
-            return {ok: true, data: formattedResults};
+            return { ok: true, data: formattedResults };
         } catch (err) {
-            return {ok: false, message: `Could not get thesis information: ${err}`}
+            return { ok: false, message: `Could not get thesis information: ${err}` }
         }
     }
 
@@ -385,34 +385,29 @@ class SQL {
      */
     async getKeywordInfo(keywordId) {
         const keywordInfoQuery = `
-            SELECT t.*, 
-                   a.name AS author_name, 
-                   k.word AS searched_keyword_word,
-                   all_k.word AS keyword_word
+            SELECT t.*, a.name AS author_name, k.word AS keyword_word
             FROM keywords k
             LEFT JOIN thesis_keywords tk ON k.id = tk.keyword_id
             LEFT JOIN theses t ON tk.thesis_id = t.id
             LEFT JOIN thesis_authors ta ON t.id = ta.thesis_id
             LEFT JOIN authors a ON ta.author_id = a.id
-            LEFT JOIN thesis_keywords all_tk ON t.id = all_tk.thesis_id
-            LEFT JOIN keywords all_k ON all_tk.keyword_id = all_k.id
             WHERE k.id = $1;
         `;
         try {
             const result = await this.pool.query(keywordInfoQuery, [keywordId]);
             if (result.rowCount === 0) {
-                return {ok: false, message: 'Keyword not found.'};
+                return { ok: false, message: 'Keyword not found.' };
             }
             const formattedResults = this.formatSearchResults(result.rows);
             return {
                 ok: true,
                 data: {
-                    word: result.rows[0].searched_keyword_word,
+                    word: result.rows[0].keyword_word,
                     theses: formattedResults
                 }
             };
         } catch (err) {
-            return {ok: false, message: `Could not get keyword information: ${err}`};
+            return { ok: false, message: `Could not get keyword information: ${err}` };
         }
     }
 
@@ -446,7 +441,7 @@ class SQL {
                 return { ok: false, message: 'Author not found.' };
             }
             const thesesMap = new Map();
-    
+
             result.rows.forEach(row => {
                 if (!thesesMap.has(row.thesis_id)) {
                     thesesMap.set(row.thesis_id, {
@@ -458,9 +453,9 @@ class SQL {
                         keywords: new Set(),
                     });
                 }
-    
+
                 const thesis = thesesMap.get(row.thesis_id);
-    
+
                 if (row.co_author_name) {
                     thesis.authors.add(row.co_author_name);
                 }
@@ -469,13 +464,13 @@ class SQL {
                     thesis.keywords.add(row.keyword_word);
                 }
             });
-    
+
             const formattedTheses = Array.from(thesesMap.values()).map(thesis => ({
                 ...thesis,
                 authors: Array.from(thesis.authors),
                 keywords: Array.from(thesis.keywords),
             }));
-    
+
             return {
                 ok: true,
                 data: {
@@ -496,7 +491,8 @@ class SQL {
      * @returns {Promise<Object>} - search results. 
      */
     async unifiedSearch(params) {
-        const { query = "", beforeYear = 0, afterYear = 9999 } = params;
+        const { query, beforeYear, afterYear } = params;
+        console.log(`Query: ${query}, Before: ${beforeYear}, After: ${afterYear}`);
         const sql = `
             SELECT t.*, 
                    a.name AS author_name, 
@@ -510,22 +506,20 @@ class SQL {
             LEFT JOIN thesis_authors co_ta ON t.id = co_ta.thesis_id
             LEFT JOIN authors co_a ON co_ta.author_id = co_a.id
             WHERE (
-                t.title ILIKE '%autism%' OR 
-                t.abstract ILIKE '%autism%' OR
-                a.name ILIKE '%autism%' OR
-                co_a.name ILIKE '%autism%' OR
-                k.word ILIKE '%autism%'
+                t.title ILIKE $1 OR 
+                t.abstract ILIKE $1 OR
+                a.name ILIKE $1 OR
+                co_a.name ILIKE $1 OR
+                k.word ILIKE $1
             )
-            AND CAST(t.year AS INTEGER) >= 0
-            AND CAST(t.year AS INTEGER) <= 9999;
-
+            AND CAST(t.year AS INTEGER) >= $2
+            AND CAST(t.year AS INTEGER) <= $3;
         `;
 
-        const values = [query, beforeYear, afterYear]; 
-
+        const values = [`%${query}%`, beforeYear, afterYear];
 
         try {
-            const result = await this.pool.query(sql);
+            const result = await this.pool.query(sql, values);
             const formattedResults = this.formatSearchResults(result.rows);
             return { ok: true, data: formattedResults };
         } catch (err) {
