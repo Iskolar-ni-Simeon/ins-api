@@ -13,7 +13,7 @@ class B2 {
             applicationKeyId: process.env.BUCKET_KEY_ID,
             applicationKey: process.env.BUCKET_APPLICATION_KEY,
         });
-        console.log("B2 initialized.");
+        console.log("[INIT]; B2 initialized.");
 
     }
     /**
@@ -27,7 +27,7 @@ class B2 {
             this.authorizationToken = authResponse.data.authorizationToken;
             this.apiUrl = authResponse.data.apiUrl;
             this.lastAuthTime = now;
-            console.log("Re-authorized B2.");
+            console.log("[AUTH]: Re-authorized B2.");
         }
     }
 

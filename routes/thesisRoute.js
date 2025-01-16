@@ -8,7 +8,6 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
                 beforeYear: req.query.beforeYear || 0,
                 afterYear: req.query.afterYear || 9999,
             };
-            console.log(req.query.q);
             const result = await SQL.unifiedSearch(SQLParams)
 
             if (!result.ok) return res.status(500).json({ data: result.message });

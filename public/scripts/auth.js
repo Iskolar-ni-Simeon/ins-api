@@ -2,19 +2,24 @@ const jwt = require('jsonwebtoken');
 const { generateKeyPairSync } = require('crypto');
 require('dotenv').config();
 
-
 const JWTMiddleware = (publicKey) => {
-
     return (req, res, next) => {
-
         if (!publicKey) {
             return res.status(500).json({ message: 'Public key is required for verification' });
         }
+
         const authHeader = req.cookies.authorization ? req.cookies.authorization : req.headers.authorization;
         if (!authHeader) {
             return res.status(401).json({ message: 'Access token required' });
         }
 
+        // Check if using API key
+        if (authHeader === process.env.LIBRARY_API_KEY) {
+            next();
+            return;
+        }
+
+        // If not API key, proceed with JWT verification
         try {
             const decoded = jwt.verify(authHeader, publicKey, { algorithms: ['ES256'] });
             req.user = decoded;
