@@ -6,7 +6,6 @@ require('dotenv').config();
 const JWTMiddleware = (publicKey) => {
 
     return (req, res, next) => {
-
         if (!publicKey) {
             return res.status(500).json({ message: 'Public key is required for verification' });
         }

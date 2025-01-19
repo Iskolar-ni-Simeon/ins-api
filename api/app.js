@@ -9,55 +9,71 @@ const { JWTMiddleware } = require('../public/scripts/auth.js');
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, '\n');
 const publicKey = process.env.PUBLIC_KEY.replace(/\\n/g, '\n');
 
+console.log('[INIT]: Starting server initialization');
+
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
     'http://localhost:8080',
+    'http://localhost:3000',
+    'http://localhost:5173',
     'https://iskolar-ni-simeon.vercel.app',
-    'https://studious-winner-94pgqppvqg53xwpx-8080.app.github.dev/' // Codespaces URL
+    'https://studious-winner-94pgqppvqg53xwpx-8080.app.github.dev',
+    'https://cjv6s94b-8080.asse.devtunnels.ms'
 ];
 
 const corsOptions = {
-    credentials: true,
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, origin);
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
         }
     },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with', 'Access-Control-Allow-Origin']
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
+app.options('*', cors(corsOptions));
+
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Credentials', 'true');
+    console.log(`[REQUEST]: ${req.method} ${req.path} from ${req.ip}`);
     next();
 });
 
-app.options('*', cors(corsOptions));
+app.use(express.json());
 app.use(cookieParser());
-console.log("Initializing B2...");
+console.log('[INIT]: Initializing B2 service...');
 const B2Class = new B2();
-console.log("Initializing SQL...");
+console.log('[INIT]: Initializing SQL service...');
 const SQLClass = new SQL();
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('[ERROR]: Middleware caught error:', err);
+    console.error('[ERROR]: Stack trace:', err.stack);
+    res.status(500).json({ 
+        message: 'Internal Server Error',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+});
 
 (async function initializeApp() {
-
+    console.log('[INIT]: Setting up routes...');
     app.get('/', (req, res) => {
         res.send("Hello, world!");
     });
     require('../routes/authenticationRoute.js')(app, privateKey, SQLClass);
     require('../routes/thesisRoute.js')(app, B2Class, SQLClass, JWTMiddleware, publicKey);
     require('../routes/userRoute.js')(app, B2Class, SQLClass, JWTMiddleware, publicKey);
+    console.log('[INIT]: Routes initialized successfully');
 })();
 
-app.listen(PORT, function () {
-    console.log(`Listening at port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log('[SERVER]: Running on http://localhost:' + PORT);
 });
 
 module.exports = (req, res) => {

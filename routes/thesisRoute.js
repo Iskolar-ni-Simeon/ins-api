@@ -2,6 +2,7 @@ const { v4: uuid4 } = require('uuid');
 
 module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
     app.get('/search', JWTMiddleware(publicKey), async (req, res, next) => {
+        console.log('[SEARCH]: New search request with query:', req.query.q);
         try {
             const SQLParams = {
                 query: req.query.q || "",
@@ -12,22 +13,26 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
             const result = await SQL.unifiedSearch(SQLParams)
 
             if (!result.ok) return res.status(500).json({ data: result.message });
+            console.log('[SEARCH]: Found results:', result.data?.length || 0);
             return res.json(result);
         } catch (error) {
-            console.error("Error occurred during search:", error);
-            return res.status(500).json({ error: `Internal server error: ${err}` });
+            console.error('[SEARCH-ERROR]:', error);
+            console.error('Search parameters:', req.query);
+            return res.status(500).json({ error: `Internal server error: ${error}` });
         }
     });
 
     app.get('/thesis', JWTMiddleware(publicKey), async (req, res, next) => {
+        console.log('[THESIS]: Fetching thesis info for UUID:', req.query.uuid);
         try {
             const uuid = req.query.uuid;
             const result = await SQL.thesisInfo(uuid)
             if (!result.ok) return res.status(500).json({ data: result.message });
             return res.json(result);
         } catch (error) {
-            console.error("Error occurred:", error);
-            return res.status(500).json({ error: `Internal server error: ${err}` });
+            console.error('Error in GET /thesis:', error);
+            console.error('Requested UUID:', req.query.uuid);
+            return res.status(500).json({ error: `Internal server error: ${error}` });
         }
     });
 
@@ -41,7 +46,8 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
             if (!result.ok) return res.status(500).json({ data: result.message });
             return res.json(result)
         } catch (err) {
-            console.error('Error: ', err)
+            console.error('Error in GET /accessthesis:', err);
+            console.error('Access parameters:', { uuid: req.query.uuid });
             return res.status(500).json({ error: `Internal server error: ${err}` });
         }
     });
@@ -53,6 +59,8 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
             if (!results.ok) return res.status(500).json({ data: results.message });
             return res.json(results);
         } catch (err) {
+            console.error('Error in GET /author:', err);
+            console.error('Author UUID:', req.query.uuid);
             return res.status(500).json({ 'error': err })
         }
     });
@@ -64,6 +72,8 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
             if (!results.ok) return res.status(500).json({ data: results.message });
             return res.json(results);
         } catch (err) {
+            console.error('Error in GET /keyword:', err);
+            console.error('Keyword UUID:', req.query.uuid);
             return res.status(500).json({ 'error': err })
         }
     });

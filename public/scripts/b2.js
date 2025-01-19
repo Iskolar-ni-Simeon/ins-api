@@ -16,10 +16,6 @@ class B2 {
         console.log("B2 initialized.");
 
     }
-    /**
-     * Since `b2.authorize();` only lasts 24 hours, this function keeps track of the
-     * last time it is authorized. If it is not authorized, authorize it (duh)
-     */
     async ensureAuthorization() {
         const now = Date.now();
         if (now - this.lastAuthTime >= this.authDuration) {
