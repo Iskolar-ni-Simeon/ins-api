@@ -100,17 +100,19 @@ module.exports = (app, privateKey, sql) => {
     app.post('/guest-login', async (req, res) => {
         console.log('[GUEST-AUTH]: Starting guest login process');
         if (!req.headers.authorization || req.headers.authorization !== process.env.LIBRARY_API_KEY) {
+            console.log('[GUEST-AUTH]: Invalid API key');
+            console
             return res.status(401).json({ message: 'Invalid API key' });
         }
 
         try {
             const guestId = `guest-${crypto.randomBytes(8).toString('hex')}`;
             const timestamp = Math.floor(Date.now() / 1000);
-            
+            console.log(`[GUEST-AUTH]: Creating guest JWT for ${guestId}`);
             const guestPayload = {
                 sub: guestId,
-                given_name: 'Guest User',
-                picture: '/images/guest.png',
+                name: 'Guest User',
+                role: 'guest',
                 iat: timestamp,
                 exp: timestamp + (60 * 60)
             };
@@ -125,7 +127,8 @@ module.exports = (app, privateKey, sql) => {
 
             const publicKeyPem = crypto.createPublicKey(privateKey)
                 .export({ type: 'spki', format: 'pem' });
-
+            
+            console.log('[GUEST-AUTH]: Guest login successful');
             return res.json({
                 token: guestPayload,
                 jwtToken: guestJWT,

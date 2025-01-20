@@ -1,4 +1,3 @@
-const fs = require('fs');
 require('dotenv').config();
 const backblaze = require('backblaze-b2');
 
@@ -37,26 +36,6 @@ class B2 {
     }
 
     /**
-     * Uploads the file to the S3 defined by the .env file.
-     * @param {Object} params - parameters for the function.
-     * @param {Buffer | Uint8Array | Blob | string} params.fileContent - file data
-     * @param {string} params.key - unique version 4 UUID for the file name.
-     */
-    async uploadFile(params) {
-        await this.ensureAuthorization();
-        const { fileContent, key } = params;
-        const { uploadUrl, uploadAuthToken } = await this.getCachedUploadUrl();
-
-        const response = this.b2.uploadFile({
-            uploadUrl: uploadUrl,
-            uploadAuthToken: uploadAuthToken,
-            fileName: `${key}.pdf`,
-            data: fileContent
-        }).then(() => { return { ok: true, message: 'File uploaded successfully.' } })
-            .catch(err => { return { ok: false, message: `Unable to upload file: ${err}` } })
-        return response
-    }
-    /**
      * Generates a pre-signed link for the user to access, to be expired in 3600 seconds (1 hour.)
      * @param {Object} params - parameters for the function.
      * @param {string} params.key - unique version 4 UUID to access the file.
@@ -80,35 +59,6 @@ class B2 {
             return { ok: false, message: `Unable to fetch access link: ${err}` }
         }
     }
-
-    /**
-     * Deletes the file determined by params.uuid, the name of the file.
-     * @param {string} uuid - unique version 4 UUID to access the file.
-     */
-    async deleteFile(uuid) {
-        await this.ensureAuthorization();
-        try {
-            const versionsResponse = await this.b2.listFileVersions({
-                bucketId: this.bucketId,
-                fileName: `${uuid}.pdf`,
-            });
-
-            const file = versionsResponse.data.files.find(file => file.fileName === `${uuid}.pdf`);
-            if (!file) {
-                return { ok: false, message: 'File not found in B2 bucket.' };
-            }
-
-            await this.b2.deleteFileVersion({
-                fileId: file.fileId,
-                fileName: file.fileName
-            });
-            return { ok: true, message: 'Successfully deleted file.' };
-        } catch (err) {
-            console.error('Unable to delete file:', err);
-            return { ok: false, message: `Unable to delete file: ${err}` };
-        }
-    }
-
 }
 
 module.exports = { B2 }
