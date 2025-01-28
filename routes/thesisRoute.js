@@ -3,11 +3,13 @@ const { v4: uuid4 } = require('uuid');
 module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
     app.get('/search', JWTMiddleware(publicKey), async (req, res, next) => {
         console.log('[SEARCH]: New search request with query:', req.query.q);
+        console.log('[SEARCH]: Type filter:', req.query.type || 'none');
         try {
             const SQLParams = {
                 query: req.query.q || "",
                 beforeYear: req.query.beforeYear || 0,
                 afterYear: req.query.afterYear || 9999,
+                type: req.query.type || null
             };
             console.log(req.query.q);
             const result = await SQL.unifiedSearch(SQLParams)

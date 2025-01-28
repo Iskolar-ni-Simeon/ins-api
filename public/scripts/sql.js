@@ -332,12 +332,15 @@ class SQL {
         const thesisInformationQuery = `
             SELECT t.id, t.title, t.year, t.abstract, 
                    a.id AS author_id, a.name AS author_name, 
-                   k.id AS keyword_id, k.word AS keyword_word
+                   k.id AS keyword_id, k.word AS keyword_word,
+                   tt.name AS type_name
             FROM theses t
             LEFT JOIN thesis_authors ta ON t.id = ta.thesis_id
             LEFT JOIN authors a ON ta.author_id = a.id
             LEFT JOIN thesis_keywords tk ON t.id = tk.thesis_id
             LEFT JOIN keywords k ON tk.keyword_id = k.id
+            LEFT JOIN thesis_type_relation ttr ON t.id = ttr.thesis_id
+            LEFT JOIN thesis_types tt ON ttr.type_id = tt.id
             WHERE t.id = $1;
         `;
         try {
@@ -359,6 +362,7 @@ class SQL {
             title: rows[0].title,
             year: rows[0].year,
             abstract: rows[0].abstract,
+            type: rows[0].type_name,
             authors: [],
             keywords: []
         };
@@ -488,16 +492,19 @@ class SQL {
      * @param {string} params.query - search query.
      * @param {number} params.beforeYear - limit search to theses published before this year.
      * @param {number} params.afterYear - limit search to theses published after this year.
+     * @param {string} params.type - type of the thesis.
      * @returns {Promise<Object>} - search results. 
      */
     async unifiedSearch(params) {
-        const { query, beforeYear, afterYear } = params;
-        console.log(`Query: ${query}, Before: ${beforeYear}, After: ${afterYear}`);
+        const { query, beforeYear, afterYear, type } = params;
+        console.log(`[SEARCH]: Query: ${query}, Before: ${beforeYear}, After: ${afterYear}, Type: ${type}`);
+        
         const sql = `
             SELECT t.*, 
                    a.name AS author_name, 
                    k.word AS keyword_word,
-                   co_a.name AS co_author_name
+                   co_a.name AS co_author_name,
+                   tt.name AS type_name
             FROM theses t
             LEFT JOIN thesis_authors ta ON t.id = ta.thesis_id
             LEFT JOIN authors a ON ta.author_id = a.id
@@ -505,24 +512,30 @@ class SQL {
             LEFT JOIN keywords k ON tk.keyword_id = k.id
             LEFT JOIN thesis_authors co_ta ON t.id = co_ta.thesis_id
             LEFT JOIN authors co_a ON co_ta.author_id = co_a.id
+            LEFT JOIN thesis_type_relation ttr ON t.id = ttr.thesis_id
+            LEFT JOIN thesis_types tt ON ttr.type_id = tt.id
             WHERE (
-                t.title ILIKE $1 OR 
+                ($1 = '' OR t.title ILIKE $1 OR 
                 t.abstract ILIKE $1 OR
                 a.name ILIKE $1 OR
                 co_a.name ILIKE $1 OR
-                k.word ILIKE $1
+                k.word ILIKE $1)
             )
             AND CAST(t.year AS INTEGER) >= $2
-            AND CAST(t.year AS INTEGER) <= $3;
+            AND CAST(t.year AS INTEGER) <= $3
+            ${type ? 'AND tt.name ILIKE $4' : ''};
         `;
 
         const values = [`%${query}%`, beforeYear, afterYear];
+        if (type) values.push(`%${type}%`);
 
         try {
             const result = await this.pool.query(sql, values);
+            console.log('[SEARCH]: Found rows:', result.rows.length);
             const formattedResults = this.formatSearchResults(result.rows);
             return { ok: true, data: formattedResults };
         } catch (err) {
+            console.error('[SEARCH-ERROR]:', err);
             return { ok: false, message: err.message };
         }
     }
