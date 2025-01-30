@@ -19,8 +19,7 @@ const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
     'https://iskolar-ni-simeon.vercel.app',
-    'https://studious-winner-94pgqppvqg53xwpx-8080.app.github.dev',
-    'https://cjv6s94b-8080.asse.devtunnels.ms'
+    'https://iskolarnisimeon.site'
 ];
 
 const corsOptions = {
@@ -64,7 +63,7 @@ app.use((err, req, res, next) => {
 (async function initializeApp() {
     console.log('[INIT]: Setting up routes...');
     app.get('/', (req, res) => {
-        res.send("Hello, world!");
+        res.redirect('https://github.com/dwnppoalt/iskolar-ni-simeon');
     });
     require('../routes/authenticationRoute.js')(app, privateKey, SQLClass);
     require('../routes/thesisRoute.js')(app, B2Class, SQLClass, JWTMiddleware, publicKey);
