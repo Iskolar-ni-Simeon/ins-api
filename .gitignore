@@ -23,6 +23,7 @@ coverage/
 .cache/
 
 # Dependency directories
+testfiles/
 package-lock.json
 yarn.lock
 node_modules
