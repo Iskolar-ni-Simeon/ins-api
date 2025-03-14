@@ -389,26 +389,66 @@ class SQL {
      */
     async getKeywordInfo(keywordId) {
         const keywordInfoQuery = `
-            SELECT t.*, a.name AS author_name, k.word AS keyword_word
-            FROM keywords k
-            LEFT JOIN thesis_keywords tk ON k.id = tk.keyword_id
+            SELECT 
+                t.id AS thesis_id,
+                t.title,
+                t.year,
+                t.abstract,
+                main_k.word AS keyword_word,
+                a.name AS author_name,
+                k.word AS related_keyword
+            FROM keywords main_k
+            LEFT JOIN thesis_keywords tk ON main_k.id = tk.keyword_id
             LEFT JOIN theses t ON tk.thesis_id = t.id
             LEFT JOIN thesis_authors ta ON t.id = ta.thesis_id
             LEFT JOIN authors a ON ta.author_id = a.id
-            WHERE k.id = $1;
+            LEFT JOIN thesis_keywords tk2 ON t.id = tk2.thesis_id
+            LEFT JOIN keywords k ON tk2.keyword_id = k.id
+            WHERE main_k.id = $1;
         `;
         try {
             const result = await this.pool.query(keywordInfoQuery, [keywordId]);
             if (result.rowCount === 0) {
                 return { ok: false, message: 'Keyword not found.' };
             }
-            const formattedResults = this.formatSearchResults(result.rows);
+
+            const thesesMap = new Map();
+
+            result.rows.forEach(row => {
+                if (!thesesMap.has(row.thesis_id)) {
+                    thesesMap.set(row.thesis_id, {
+                        id: row.thesis_id,
+                        title: row.title,
+                        year: row.year,
+                        abstract: row.abstract,
+                        authors: new Set(),
+                        keywords: new Set(),
+                    });
+                }
+
+                const thesis = thesesMap.get(row.thesis_id);
+
+                if (row.author_name) {
+                    thesis.authors.add(row.author_name);
+                }
+
+                if (row.related_keyword) {
+                    thesis.keywords.add(row.related_keyword);
+                }
+            });
+
+            const formattedTheses = Array.from(thesesMap.values()).map(thesis => ({
+                ...thesis,
+                authors: Array.from(thesis.authors),
+                keywords: Array.from(thesis.keywords),
+            }));
+
             return {
                 ok: true,
                 data: {
                     word: result.rows[0].keyword_word,
-                    theses: formattedResults
-                }
+                    theses: formattedTheses,
+                },
             };
         } catch (err) {
             return { ok: false, message: `Could not get keyword information: ${err}` };
