@@ -20,7 +20,10 @@ const allowedOrigins = [
     'http://localhost:5173',
     'https://iskolar-ni-simeon.vercel.app',
     'https://iskolarnisimeon.site',
-    'https://beta.iskolarnisimeon.site'
+    'https://beta.iskolarnisimeon.site',
+    'http://iskolar-ni-simeon.vercel.app',
+    'http://iskolarnisimeon.site',
+    'http://beta.iskolarnisimeon.site'
 ];
 
 const corsOptions = {

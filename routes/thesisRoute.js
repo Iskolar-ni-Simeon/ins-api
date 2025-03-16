@@ -13,7 +13,7 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
             };
             console.log(req.query.q);
             const result = await SQL.unifiedSearch(SQLParams)
-
+            
             if (!result.ok) return res.status(500).json({ data: result.message });
             console.log('[SEARCH]: Found results:', result.data?.length || 0);
             return res.json(result);
