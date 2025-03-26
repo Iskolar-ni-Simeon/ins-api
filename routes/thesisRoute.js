@@ -1,5 +1,3 @@
-const { v4: uuid4 } = require('uuid');
-
 module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
     app.get('/search', JWTMiddleware(publicKey), async (req, res, next) => {
         console.log('[SEARCH]: New search request with query:', req.query.q);
@@ -11,10 +9,14 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
                 afterYear: req.query.afterYear || 9999,
                 type: req.query.type || null
             };
-            console.log(req.query.q);
+
+            console.log('[SEARCH]: Fetching search results');
             const result = await SQL.unifiedSearch(SQLParams)
             
-            if (!result.ok) return res.status(500).json({ data: result.message });
+            if (!result.ok) {
+                console.log('[SEARCH]: Error in search:', result.message);
+                return res.status(500).json({ data: result.message });
+            }
             console.log('[SEARCH]: Found results:', result.data?.length || 0);
             return res.json(result);
         } catch (error) {
@@ -29,6 +31,7 @@ module.exports = (app, B2, SQL, JWTMiddleware, publicKey) => {
         try {
             const uuid = req.query.uuid;
             const result = await SQL.thesisInfo(uuid)
+            console.log(result)
             if (!result.ok) return res.status(500).json({ data: result.message });
             return res.json(result);
         } catch (error) {

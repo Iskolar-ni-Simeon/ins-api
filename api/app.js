@@ -21,9 +21,7 @@ const allowedOrigins = [
     'https://iskolar-ni-simeon.vercel.app',
     'https://iskolarnisimeon.site',
     'https://beta.iskolarnisimeon.site',
-    'http://iskolar-ni-simeon.vercel.app',
-    'http://iskolarnisimeon.site',
-    'http://beta.iskolarnisimeon.site'
+    'http://127.0.0.1'
 ];
 
 const corsOptions = {

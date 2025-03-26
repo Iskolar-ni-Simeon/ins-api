@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
+const { BM25 } = require('./bm25');
 require('dotenv').config();
 
 class SQL {
@@ -580,5 +581,11 @@ class SQL {
         }
     }
 }
+
+// (async () => {
+//     const s = new SQL();
+//     const results = s.unifiedSearch({ query: 'computer', beforeYear: 0, afterYear: 9999});
+//     console.log(results.then(results => results));
+// })();
 
 module.exports = { SQL };
